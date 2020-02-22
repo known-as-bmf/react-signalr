@@ -1,0 +1,79 @@
+{
+  "name": "@known-as-bmf/react-signalr",
+  "version": "0.1.0",
+  "author": "Julien Avert",
+  "description": "Reack hook to wrap a connection to a signalr hub.",
+  "keywords": [
+    "javascript",
+    "react",
+    "react hook",
+    "signalr",
+    "rxjs",
+    "websocket"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/known-as-bmf/react-signalr.git"
+  },
+  "homepage": "https://github.com/known-as-bmf/react-signalr",
+  "bugs": "https://github.com/known-as-bmf/react-signalr/issues",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "module": "dist/react-signalr.esm.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test",
+    "test:watch": "tsdx test --watch",
+    "test:coverage": "tsdx test --coverage",
+    "lint": "tsdx lint"
+  },
+  "peerDependencies": {
+    "react": ">=16.8",
+    "rxjs": ">=6.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "9.4.0",
+    "@testing-library/react-hooks": "3.2.1",
+    "@types/jest": "25.1.3",
+    "@types/react": "16.9.22",
+    "@types/react-dom": "16.9.5",
+    "@typescript-eslint/eslint-plugin": "2.20.0",
+    "@typescript-eslint/parser": "2.20.0",
+    "eslint": "6.8.0",
+    "eslint-plugin-react-hooks": "2.4.0",
+    "husky": "4.2.3",
+    "prettier": "1.19.1",
+    "pretty-quick": "2.0.1",
+    "react": "16.12.0",
+    "react-dom": "16.12.0",
+    "react-test-renderer": "16.12.0",
+    "rxjs": "6.5.4",
+    "tsdx": "0.12.3",
+    "tslib": "1.11.0",
+    "typescript": "3.8.2"
+  },
+  "dependencies": {
+    "@aspnet/signalr": "1.1.4",
+    "@known-as-bmf/store": "0.2.0",
+    "tiny-warning": "1.0.3"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "tsdx lint && pretty-quick --staged"
+    }
+  },
+  "prettier": {
+    "printWidth": 80,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
