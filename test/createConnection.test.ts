@@ -17,10 +17,10 @@ describe('createConnection', () => {
     withUrl = jest.fn().mockReturnThis();
 
     HubConnectionBuilderMock.mockImplementation(() => {
-      return {
+      return ({
         build,
         withUrl,
-      } as any;
+      } as unknown) as signalr.HubConnectionBuilder;
     });
   });
 

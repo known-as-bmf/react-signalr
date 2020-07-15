@@ -24,9 +24,7 @@ const MyComponent = () => {
   const { send, on } = useSignalr(signalrEndpoint);
 
   useEffect(() => {
-    const sub = on<MyType>('myMethod')
-      .pipe(debounceTime(200))
-      .subscribe(set);
+    const sub = on<MyType>('myMethod').pipe(debounceTime(200)).subscribe(set);
 
     return () => sub.unsubscribe();
   }, [on]);
@@ -43,103 +41,81 @@ When the component that initiated the connection unmounts, the connection is clo
 
 ## API
 
-### Interfaces
+### useSignalr
 
-- [IUseSignalrHookResult](#iusesignalrhookresult)
+```ts
+/**
+ * Hook used to interact with a signalr connection.
+ * Parameter changes (`hubUrl`, `options`) are not taken into account and will not rerender.
+ * @param hubUrl The URL of the signalr hub endpoint to connect to.
+ * @param options Options object to pass to connection builder.
+ * @returns An object containing methods to interact with the hub connection.
+ */
+function useSignalr(
+  hubUrl: string,
+  options?: IHttpConnectionOptions
+): UseSignalrHookResult;
+```
 
-### Functions
+```ts
+interface UseSignalrHookResult {
+  /**
+   * Proxy to `HubConnection.invoke`.
+   *
+   * @typeparam TResponse The expected response type.
+   * @param {string} methodName The name of the server method to invoke.
+   * @param {unknown} arg The argument used to invoke the server method.
+   *
+   * @returns {Promise<TResponse>} A promise that resolves what `HubConnection.invoke` would have resolved.
+   *
+   * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#invoke
+   */
+  invoke: InvokeFunction;
+  /**
+   * Utility method used to subscribe to realtime events (`HubConnection.on`, `HubConnection.off`).
+   *
+   * @typeparam TMessage The expected message type.
+   * @param {string} methodName The name of the server method to subscribe to.
+   *
+   * @returns {Observable<TMessage>} An observable that emits every time a realtime message is recieved.
+   *
+   * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#on
+   * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#off
+   */
+  on: OnFunction;
+  /**
+   * Proxy to `HubConnection.send`
+   *
+   * @param {string} methodName The name of the server method to invoke.
+   * @param {unknown} arg The argument used to invoke the server method.
+   *
+   * @returns {Promise<void>} A promise that resolves when `HubConnection.send` would have resolved.
+   *
+   * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#send
+   */
+  send: SendFunction;
+}
+```
 
-- [useSignalr](#iusesignalrhookresult)
+### SendFunction
 
-## Interfaces
+```ts
+type SendFunction = (methodName: string, arg?: unknown) => Promise<void>;
+```
 
-### <a name="iusesignalrhookresult"></a> IUseSignalrHookResult
+### InvokeFunction
 
-### Properties
+```ts
+type InvokeFunction = <TResponse = unknown>(
+  methodName: string,
+  arg?: unknown
+) => Promise<TResponse>;
+```
 
-- [invoke](#iusesignalrhookresult_invoke)
-- [on](#iusesignalrhookresult_on)
-- [send](#iusesignalrhookresult_send)
+### OnFunction
 
-## Properties
-
-### <a name="iusesignalrhookresult_invoke"></a> invoke
-
-• **invoke**: _`InvokeFunction`_
-
-_Defined in [useSignalr.ts:36](https://github.com/known-as-bmf/react-signalr/blob/98d6b70/src/useSignalr.ts#L36)_
-
-Proxy to `HubConnection.invoke`.
-
-**`typeparam`** The expected response type.
-
-**`param`** The name of the server method to invoke.
-
-**`param`** The argument used to invoke the server method.
-
-**`returns`** An observable that emits what `HubConnection.invoke` would have resolved
-and errors if the call failed or was made when the connecton was closing.
-
-**`see`** https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#invoke
-
----
-
-### <a name="iusesignalrhookresult_on"></a> on
-
-• **on**: _`OnFunction`_
-
-_Defined in [useSignalr.ts:47](https://github.com/known-as-bmf/react-signalr/blob/98d6b70/src/useSignalr.ts#L47)_
-
-Utility method used to subscribe to realtime events (`HubConnection.on`, `HubConnection.off`).
-
-**`param`** The name of the server method to subscribe to.
-
-**`returns`** An observable that emits every time a realtime message is recieved.
-
-**`see`** https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#on
-
-**`see`** https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#off
-
----
-
-### <a name="iusesignalrhookresult_send"></a> send
-
-• **send**: _`SendFunction`_
-
-_Defined in [useSignalr.ts:59](https://github.com/known-as-bmf/react-signalr/blob/98d6b70/src/useSignalr.ts#L59)_
-
-Proxy to `HubConnection.send`
-
-**`param`** The name of the server method to invoke.
-
-**`param`** The argument used to invoke the server method.
-
-**`returns`** An observable that emits what `HubConnection.send` would have resolved
-and errors if the call failed or was made when the connecton was closing.
-
-**`see`** https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#send
-
-### Functions
-
-#### <a name="const-usesignalr"></a> `Const` useSignalr
-
-▸ **useSignalr**(`url`: string, `options`: undefined | `IHttpConnectionOptions`): _object_
-
-_Defined in [useSignalr.ts:110](https://github.com/known-as-bmf/react-signalr/blob/98d6b70/src/useSignalr.ts#L110)_
-
-Hook used to interact with a signalr connection.
-
-**Parameters:**
-
-| Name      | Type                                  | Description                                        |
-| --------- | ------------------------------------- | -------------------------------------------------- |
-| `url`     | string                                | The URL of the signalr hub endpoint to connect to. |
-| `options` | undefined \| `IHttpConnectionOptions` | Options object to pass to connection builder.      |
-
-**Returns:** _object_
-
-An object containing methods to interact with the hub connection.
-
-## TODO
-
-unit tests
+```ts
+type OnFunction = <TMessage = unknown>(
+  methodName: string
+) => Observable<TMessage>;
+```
