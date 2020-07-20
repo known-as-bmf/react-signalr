@@ -1,4 +1,4 @@
-import { HubConnection } from '@aspnet/signalr';
+import { HubConnection } from '@microsoft/signalr';
 import { Observable } from 'rxjs';
 import { of, swap, deref } from '@known-as-bmf/store';
 

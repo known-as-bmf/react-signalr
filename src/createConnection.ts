@@ -2,7 +2,7 @@ import {
   HubConnectionBuilder,
   IHttpConnectionOptions,
   HubConnection,
-} from '@aspnet/signalr';
+} from '@microsoft/signalr';
 
 /**
  * Creates a signalr hub connection.

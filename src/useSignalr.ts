@@ -1,5 +1,5 @@
 import { fromEventPattern, Observable } from 'rxjs';
-import { HubConnection, IHttpConnectionOptions } from '@aspnet/signalr';
+import { HubConnection, IHttpConnectionOptions } from '@microsoft/signalr';
 import { shareReplay, switchMap, share, take } from 'rxjs/operators';
 import { useCallback, useEffect, useMemo } from 'react';
 
