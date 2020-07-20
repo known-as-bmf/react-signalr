@@ -125,7 +125,7 @@ export function useSignalr(
         )
         .toPromise();
     },
-    []
+    [connection$]
   );
 
   const invoke = useCallback<InvokeFunction>(
@@ -139,27 +139,30 @@ export function useSignalr(
         )
         .toPromise();
     },
-    []
+    [connection$]
   );
 
-  const on = useCallback<OnFunction>(<TMessage>(methodName: string) => {
-    return connection$
-      .pipe(
-        // only take the current value of the observable
-        take(1),
-        // use the connection
-        switchMap(connection =>
-          // create an observable from the server events
-          fromEventPattern<TMessage>(
-            (handler: (...args: unknown[]) => void) =>
-              connection.on(methodName, handler),
-            (handler: (...args: unknown[]) => void) =>
-              connection.off(methodName, handler)
+  const on = useCallback<OnFunction>(
+    <TMessage>(methodName: string) => {
+      return connection$
+        .pipe(
+          // only take the current value of the observable
+          take(1),
+          // use the connection
+          switchMap(connection =>
+            // create an observable from the server events
+            fromEventPattern<TMessage>(
+              (handler: (...args: unknown[]) => void) =>
+                connection.on(methodName, handler),
+              (handler: (...args: unknown[]) => void) =>
+                connection.off(methodName, handler)
+            )
           )
         )
-      )
-      .pipe(share());
-  }, []);
+        .pipe(share());
+    },
+    [connection$]
+  );
 
   return { invoke, on, send };
 }
