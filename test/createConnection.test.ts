@@ -1,8 +1,8 @@
-import * as signalr from '@aspnet/signalr';
+import * as signalr from '@microsoft/signalr';
 
 import { createConnection } from '../src/createConnection';
 
-jest.mock('@aspnet/signalr');
+jest.mock('@microsoft/signalr');
 
 const HubConnectionBuilderMock = (signalr.HubConnectionBuilder as unknown) as jest.MockedClass<
   typeof signalr.HubConnectionBuilder
