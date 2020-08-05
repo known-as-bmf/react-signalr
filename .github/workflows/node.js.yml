@@ -12,7 +12,7 @@ on:
 
 jobs:
   test:
-    name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
+    name: Test on node ${{ matrix.node-version }} and ${{ matrix.os }}
     
     runs-on: ${{ matrix.os }}
 
@@ -35,7 +35,7 @@ jobs:
     - run: npm run test:coverage
 
   build:
-    name: Build on node ${{ matrix.node_version }} and ${{ matrix.os }}
+    name: Build on node ${{ matrix.node-version }} and ${{ matrix.os }}
     
     runs-on: ${{ matrix.os }}
 
