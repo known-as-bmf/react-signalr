@@ -17,6 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
+      max-parallel: 1
       matrix:
         os: [windows-latest, ubuntu-latest]
         node-version: [10.x, 12.x, 14.x]
@@ -40,6 +41,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
+      max-parallel: 1
       matrix:
         os: [windows-latest, ubuntu-latest]
         node-version: [10.x, 12.x, 14.x]
