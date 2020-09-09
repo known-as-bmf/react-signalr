@@ -1,10 +1,11 @@
 import { fromEventPattern, Observable } from 'rxjs';
-import { HubConnection, IHttpConnectionOptions } from '@microsoft/signalr';
+import { IHttpConnectionOptions, HubConnectionState } from '@microsoft/signalr';
 import { shareReplay, switchMap, share, take } from 'rxjs/operators';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { createConnection } from './createConnection';
 import { lookup, invalidate, cache } from './cache';
+import { EnhancedHubConnection } from './types';
 
 type SendFunction = (methodName: string, arg?: unknown) => Promise<void>;
 type InvokeFunction = <TResponse = unknown>(
@@ -51,19 +52,60 @@ interface UseSignalrHookResult {
    * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#send
    */
   send: SendFunction;
+
+  state: HubConnectionState;
 }
 
 function getOrSetupConnection(
   hubUrl: string,
   options?: IHttpConnectionOptions
-) {
+): Observable<EnhancedHubConnection> {
   // find if a connection is already cached for this hub
   let connection$ = lookup(hubUrl);
 
   if (!connection$) {
     // if no connection is established, create one and wrap it in an shared replay observable
-    connection$ = new Observable<HubConnection>(observer => {
-      const connection = createConnection(hubUrl, options);
+    connection$ = new Observable<EnhancedHubConnection>(observer => {
+      const plainConnection = createConnection(hubUrl, options);
+
+      const connection = Object.defineProperties(plainConnection, {
+        _connectionState: {
+          value: plainConnection.state,
+          writable: true,
+        },
+        onstatechange: {
+          value: (() => {
+            const subs = new Set<(state: HubConnectionState) => void>();
+            return Object.assign(
+              (callback: (state: HubConnectionState) => void) => {
+                subs.add(callback);
+                return () => subs.delete(callback);
+              },
+              {
+                emit: (state: HubConnectionState) => {
+                  subs.forEach(sub => sub(state));
+                },
+              }
+            );
+          })(),
+          enumerable: true,
+        },
+        connectionState: {
+          get: function (this: { _connectionState: HubConnectionState }) {
+            return this._connectionState;
+          },
+          set: function (
+            this: {
+              _connectionState: HubConnectionState;
+              onstatechange: { emit: (state: HubConnectionState) => void };
+            },
+            value: HubConnectionState
+          ) {
+            this._connectionState = value;
+            this.onstatechange.emit(value);
+          },
+        },
+      }) as EnhancedHubConnection;
 
       // when the connection closes
       connection.onclose(() => {
@@ -96,9 +138,13 @@ function getOrSetupConnection(
 /**
  * Hook used to interact with a signalr connection.
  * Parameter changes (`hubUrl`, `options`) are not taken into account and will not rerender.
+ *
  * @param hubUrl The URL of the signalr hub endpoint to connect to.
  * @param options Options object to pass to connection builder.
+ *
  * @returns An object containing methods to interact with the hub connection.
+ *
+ * @todo `HubConnectionBuilder` configuration action
  */
 export function useSignalr(
   hubUrl: string,
@@ -106,10 +152,31 @@ export function useSignalr(
 ): UseSignalrHookResult {
   // ignore hubUrl & options changes, todo: useRef, useState ?
   const connection$ = useMemo(() => getOrSetupConnection(hubUrl, options), []);
+  const [state, setState] = useState<HubConnectionState>(
+    HubConnectionState.Disconnected
+  );
 
   useEffect(() => {
+    let stateUnsub = () => {
+      /* noop */
+    };
     // used to maintain 1 active subscription while the hook is rendered
-    const subscription = connection$.subscribe(); // todo: handle on complete (unexpected connection stop) ?
+    const subscription = connection$.subscribe(
+      connection => {
+        setState(connection.state);
+        console.log('original state', connection.state);
+        stateUnsub = connection.onstatechange(newState => {
+          console.log('new state', newState);
+          setState(newState);
+        });
+      },
+      () => {
+        stateUnsub();
+      },
+      () => {
+        stateUnsub();
+      }
+    ); // todo: handle on complete (unexpected connection stop) ?
 
     return () => subscription.unsubscribe();
   }, [connection$]);
@@ -164,5 +231,5 @@ export function useSignalr(
     [connection$]
   );
 
-  return { invoke, on, send };
+  return { invoke, on, send, state };
 }
