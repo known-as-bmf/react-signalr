@@ -1,16 +1,7 @@
+require('@known-as-bmf/eslint-config-bmf/patch/modern-module-resolution');
+
 module.exports = {
   root: true,
-  parser: '@typescript-eslint/parser',
-  parserOptions: {
-    tsconfigRootDir: __dirname,
-    project: ['./tsconfig.json'],
-  },
-  plugins: ['@typescript-eslint', 'react-hooks'],
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/eslint-recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:@typescript-eslint/recommended-requiring-type-checking',
-    'prettier/@typescript-eslint',
-  ],
+  extends: ['@known-as-bmf/eslint-config-bmf/web'],
+  parserOptions: { tsconfigRootDir: __dirname },
 };

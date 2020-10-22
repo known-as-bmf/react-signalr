@@ -19,11 +19,11 @@ interface UseSignalrHookResult {
   /**
    * Proxy to `HubConnection.invoke`.
    *
-   * @typeparam TResponse The expected response type.
-   * @param {string} methodName The name of the server method to invoke.
-   * @param {unknown} arg The argument used to invoke the server method.
+   * @typeparam TResponse - The expected response type.
+   * @param methodName - The name of the server method to invoke.
+   * @param arg - The argument used to invoke the server method.
    *
-   * @returns {Promise<TResponse>} A promise that resolves what `HubConnection.invoke` would have resolved.
+   * @returns A promise that resolves what `HubConnection.invoke` would have resolved.
    *
    * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#invoke
    */
@@ -31,10 +31,10 @@ interface UseSignalrHookResult {
   /**
    * Utility method used to subscribe to realtime events (`HubConnection.on`, `HubConnection.off`).
    *
-   * @typeparam TMessage The expected message type.
-   * @param {string} methodName The name of the server method to subscribe to.
+   * @typeparam TMessage - The expected message type.
+   * @param methodName - The name of the server method to subscribe to.
    *
-   * @returns {Observable<TMessage>} An observable that emits every time a realtime message is recieved.
+   * @returns An observable that emits every time a realtime message is recieved.
    *
    * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#on
    * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#off
@@ -43,10 +43,10 @@ interface UseSignalrHookResult {
   /**
    * Proxy to `HubConnection.send`
    *
-   * @param {string} methodName The name of the server method to invoke.
-   * @param {unknown} arg The argument used to invoke the server method.
+   * @param methodName - The name of the server method to invoke.
+   * @param arg - The argument used to invoke the server method.
    *
-   * @returns {Promise<void>} A promise that resolves when `HubConnection.send` would have resolved.
+   * @returns A promise that resolves when `HubConnection.send` would have resolved.
    *
    * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#send
    */
@@ -56,7 +56,7 @@ interface UseSignalrHookResult {
 function getOrSetupConnection(
   hubUrl: string,
   options?: IHttpConnectionOptions
-) {
+): Observable<HubConnection> {
   // find if a connection is already cached for this hub
   let connection$ = lookup(hubUrl);
 
@@ -79,7 +79,9 @@ function getOrSetupConnection(
       });
 
       // teardown logic will be executed when there is no subscribers left (close the connection)
-      return () => void connection.stop();
+      return () => {
+        void connection.stop();
+      };
     }).pipe(
       // everyone subscribing will get the same connection
       // refCount is used to complete the observable when there is no subscribers left
@@ -96,8 +98,8 @@ function getOrSetupConnection(
 /**
  * Hook used to interact with a signalr connection.
  * Parameter changes (`hubUrl`, `options`) are not taken into account and will not rerender.
- * @param hubUrl The URL of the signalr hub endpoint to connect to.
- * @param options Options object to pass to connection builder.
+ * @param hubUrl - The URL of the signalr hub endpoint to connect to.
+ * @param options - Options object to pass to connection builder.
  * @returns An object containing methods to interact with the hub connection.
  */
 export function useSignalr(

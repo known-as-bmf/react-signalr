@@ -1,16 +1,19 @@
+jest.mock('@microsoft/signalr');
+
 import * as signalr from '@microsoft/signalr';
 
 import { createConnection } from '../src/createConnection';
-
-jest.mock('@microsoft/signalr');
 
 const HubConnectionBuilderMock = (signalr.HubConnectionBuilder as unknown) as jest.MockedClass<
   typeof signalr.HubConnectionBuilder
 >;
 
 describe('createConnection', () => {
-  let build: jest.Mock<any, any>;
-  let withUrl: jest.Mock<any, any>;
+  let build: jest.Mock<signalr.HubConnection, []>;
+  let withUrl: jest.Mock<
+    signalr.HubConnectionBuilder,
+    [string, signalr.HttpTransportType | signalr.IHttpConnectionOptions]
+  >;
 
   beforeEach(() => {
     build = jest.fn();

@@ -18,52 +18,50 @@
   "homepage": "https://github.com/known-as-bmf/react-signalr",
   "bugs": "https://github.com/known-as-bmf/react-signalr/issues",
   "license": "MIT",
-  "main": "dist/index.js",
-  "module": "dist/react-signalr.esm.js",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.es.js",
   "typings": "dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
     "start": "tsdx watch",
-    "build": "tsdx build",
-    "test": "tsdx test",
-    "test:watch": "tsdx test --watch",
-    "test:coverage": "tsdx test --coverage",
-    "lint": "tsdx lint"
+    "build": "tscli build",
+    "test": "tscli test",
+    "test:watch": "tscli test --watch",
+    "test:coverage": "tscli test --coverage",
+    "lint": "tscli lint"
   },
   "peerDependencies": {
-    "react": "^16.8",
-    "rxjs": "^6"
+    "react": ">=16.8.0",
+    "rxjs": ">=6.6.0"
   },
   "devDependencies": {
-    "@testing-library/react": "10.4.7",
-    "@testing-library/react-hooks": "3.4.1",
-    "@types/jest": "26.0.7",
-    "@types/react": "16.9.43",
+    "@known-as-bmf/eslint-config-bmf": "1.0.1",
+    "@known-as-bmf/tscli": "0.1.2",
+    "@testing-library/react": "11.1.0",
+    "@testing-library/react-hooks": "3.4.2",
+    "@types/jest": "26.0.15",
+    "@types/react": "16.9.53",
     "@types/react-dom": "16.9.8",
-    "@typescript-eslint/eslint-plugin": "3.7.0",
-    "@typescript-eslint/parser": "3.7.0",
-    "eslint": "7.5.0",
-    "eslint-plugin-react-hooks": "4.0.8",
-    "husky": "4.2.5",
-    "prettier": "2.0.5",
-    "pretty-quick": "2.0.1",
-    "react": "16.13.1",
-    "react-dom": "16.13.1",
-    "react-test-renderer": "16.13.1",
-    "rxjs": "6.6.0",
-    "tsdx": "0.13.2",
-    "tslib": "2.0.0",
-    "typescript": "3.9.7"
+    "eslint": "7.11.0",
+    "husky": "4.3.0",
+    "prettier": "2.1.2",
+    "pretty-quick": "3.1.0",
+    "react": "17.0.1",
+    "react-dom": "17.0.1",
+    "react-test-renderer": "17.0.1",
+    "rxjs": "6.6.3",
+    "tslib": "2.0.3",
+    "typescript": "4.0.3"
   },
   "dependencies": {
-    "@microsoft/signalr": "3.1.6",
-    "@known-as-bmf/store": "2.0.1"
+    "@microsoft/signalr": "3.1.9",
+    "@known-as-bmf/store": "3.0.2"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "tsdx lint && pretty-quick --staged"
+      "pre-commit": "tscli lint --fix && pretty-quick --staged"
     }
   },
   "prettier": {
