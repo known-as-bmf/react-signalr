@@ -98,8 +98,10 @@ function getOrSetupConnection(
 /**
  * Hook used to interact with a signalr connection.
  * Parameter changes (`hubUrl`, `options`) are not taken into account and will not rerender.
+ *
  * @param hubUrl - The URL of the signalr hub endpoint to connect to.
  * @param options - Options object to pass to connection builder.
+ *
  * @returns An object containing methods to interact with the hub connection.
  */
 export function useSignalr(
