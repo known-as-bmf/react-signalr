@@ -1,28 +1,32 @@
+jest.mock('../src/createConnection');
+
+import { HubConnection, IHttpConnectionOptions } from '@microsoft/signalr';
 import { renderHook, act } from '@testing-library/react-hooks';
+import { Subscription } from 'rxjs';
 
 import { useSignalr } from '../src';
 import * as createConnection from '../src/createConnection';
-import { Subscription } from 'rxjs';
-
-jest.mock('../src/createConnection');
 
 const createConnectionMock = createConnection.createConnection as jest.Mock<
-  any,
-  any
+  HubConnection,
+  [string, IHttpConnectionOptions | undefined]
 >;
 
 // we have to use delays for certain async stuff... TODO: find a way to remove this hack.
 // const delay = (duration: number = 0) => new Promise(res => setTimeout(res, duration));
 
 describe('useSignalr', () => {
-  let start: jest.Mock<any, any>;
-  let stop: jest.Mock<any, any>;
-  let onclose: jest.Mock<any, any>;
+  let start: jest.Mock<Promise<void>, []>;
+  let stop: jest.Mock<Promise<void>, []>;
+  let onclose: jest.Mock<void, [(error?: Error) => void]>;
 
-  let on: jest.Mock<any, any>;
-  let off: jest.Mock<any, any>;
-  let send: jest.Mock<any, any>;
-  let invoke: jest.Mock<any, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let on: jest.Mock<void, [string, (...args: any[]) => void]>;
+  let off: jest.Mock<void, [string]>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let send: jest.Mock<Promise<void>, [string, ...any[]]>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let invoke: jest.Mock<Promise<any>, [string, ...any[]]>;
 
   beforeEach(() => {
     start = jest.fn(async () => {
@@ -35,14 +39,14 @@ describe('useSignalr', () => {
 
     on = jest.fn();
     off = jest.fn();
-    send = jest.fn(async () => {
+    send = jest.fn(async (_, ...__) => {
       /** noop */
     });
-    invoke = jest.fn(async () => {
+    invoke = jest.fn(async (_, ...__) => {
       /** noop */
     });
 
-    createConnectionMock.mockReturnValue({
+    createConnectionMock.mockReturnValue(({
       start,
       onclose,
       stop,
@@ -50,7 +54,7 @@ describe('useSignalr', () => {
       off,
       send,
       invoke,
-    });
+    } as unknown) as HubConnection);
   });
 
   afterEach(() => {
