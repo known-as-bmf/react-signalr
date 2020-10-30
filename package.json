@@ -31,7 +31,8 @@
     "test": "tscli test",
     "test:watch": "tscli test --watch",
     "test:coverage": "tscli test --coverage",
-    "lint": "tscli lint"
+    "lint": "tscli lint",
+    "prepublishOnly": "tscli build"
   },
   "peerDependencies": {
     "react": ">=16.8.0",
