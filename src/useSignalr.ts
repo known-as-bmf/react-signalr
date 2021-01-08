@@ -74,9 +74,14 @@ function getOrSetupConnection(
       });
 
       // start the connection and emit to the observable when the connection is ready
-      void connection.start().then(() => {
-        observer.next(connection);
-      });
+      void connection
+        .start()
+        .then(() => {
+          observer.next(connection);
+        })
+        .catch(err => {
+          observer.error(err);
+        });
 
       // teardown logic will be executed when there is no subscribers left (close the connection)
       return () => {
