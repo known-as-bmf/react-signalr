@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "@microsoft/signalr": "5.0.2",
-    "@known-as-bmf/store": "3.0.5"
+    "@known-as-bmf/store": "3.0.6"
   },
   "husky": {
     "hooks": {
