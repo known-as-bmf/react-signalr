@@ -39,8 +39,8 @@
     "rxjs": ">=6.6.0"
   },
   "devDependencies": {
-    "@known-as-bmf/eslint-config-bmf": "1.0.5",
-    "@known-as-bmf/tscli": "0.1.7",
+    "@known-as-bmf/eslint-config-bmf": "1.0.6",
+    "@known-as-bmf/tscli": "0.1.8",
     "@testing-library/react": "11.2.3",
     "@testing-library/react-hooks": "5.0.0",
     "@types/jest": "26.0.20",
