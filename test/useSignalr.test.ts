@@ -172,7 +172,7 @@ describe('useSignalr', () => {
 
       const { result } = renderHook(() => useSignalr('url2', options));
 
-      await act(() => result.current.invoke('test', 'arg'));
+      await act(() => result.current.invoke<void>('test', 'arg'));
 
       expect(invoke).toHaveBeenCalledTimes(1);
       expect(invoke).toHaveBeenCalledWith('test', 'arg');
