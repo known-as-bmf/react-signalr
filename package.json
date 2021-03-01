@@ -39,27 +39,27 @@
     "rxjs": ">=6.6.0"
   },
   "devDependencies": {
-    "@known-as-bmf/eslint-config-bmf": "1.0.6",
-    "@known-as-bmf/tscli": "0.1.8",
-    "@testing-library/react": "11.2.3",
-    "@testing-library/react-hooks": "5.0.0",
+    "@known-as-bmf/eslint-config-bmf": "1.0.7",
+    "@known-as-bmf/tscli": "0.1.9",
+    "@testing-library/react": "11.2.5",
+    "@testing-library/react-hooks": "5.0.3",
     "@types/jest": "26.0.20",
-    "@types/react": "17.0.0",
-    "@types/react-dom": "17.0.0",
-    "eslint": "7.18.0",
+    "@types/react": "17.0.2",
+    "@types/react-dom": "17.0.1",
+    "eslint": "7.21.0",
     "husky": "4.3.8",
     "prettier": "2.2.1",
     "pretty-quick": "3.1.0",
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "react-test-renderer": "17.0.1",
-    "rxjs": "6.6.3",
+    "rxjs": "6.6.6",
     "tslib": "2.1.0",
-    "typescript": "4.1.3"
+    "typescript": "4.2.2"
   },
   "dependencies": {
-    "@microsoft/signalr": "5.0.2",
-    "@known-as-bmf/store": "3.0.6"
+    "@known-as-bmf/store": "3.0.7",
+    "@microsoft/signalr": "5.0.3"
   },
   "husky": {
     "hooks": {
