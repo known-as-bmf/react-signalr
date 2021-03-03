@@ -1,6 +1,6 @@
 {
   "name": "@known-as-bmf/react-signalr",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "author": "Julien Avert",
   "description": "Reack hook to wrap a connection to a signalr hub.",
   "keywords": [
@@ -42,7 +42,7 @@
     "@known-as-bmf/eslint-config-bmf": "1.0.7",
     "@known-as-bmf/tscli": "0.1.9",
     "@testing-library/react": "11.2.5",
-    "@testing-library/react-hooks": "5.0.3",
+    "@testing-library/react-hooks": "5.1.0",
     "@types/jest": "26.0.20",
     "@types/react": "17.0.2",
     "@types/react-dom": "17.0.1",
