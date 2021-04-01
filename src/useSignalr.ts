@@ -3,7 +3,7 @@ import { HubConnection, IHttpConnectionOptions } from '@microsoft/signalr';
 import { shareReplay, switchMap, share, take } from 'rxjs/operators';
 import { useCallback, useEffect, useMemo } from 'react';
 
-import { createConnection } from './createConnection';
+import { IBuilderFunction, createConnection } from './createConnection';
 import { lookup, invalidate, cache } from './cache';
 
 type SendFunction = (methodName: string, arg?: unknown) => Promise<void>;
@@ -25,7 +25,7 @@ interface UseSignalrHookResult {
    *
    * @returns A promise that resolves what `HubConnection.invoke` would have resolved.
    *
-   * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#invoke
+   * @see https://docs.microsoft.com/en-us/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#invoke
    */
   invoke: InvokeFunction;
   /**
@@ -36,8 +36,8 @@ interface UseSignalrHookResult {
    *
    * @returns An observable that emits every time a realtime message is recieved.
    *
-   * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#on
-   * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#off
+   * @see https://docs.microsoft.com/en-us/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#on
+   * @see https://docs.microsoft.com/en-us/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#off
    */
   on: OnFunction;
   /**
@@ -48,14 +48,15 @@ interface UseSignalrHookResult {
    *
    * @returns A promise that resolves when `HubConnection.send` would have resolved.
    *
-   * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#send
+   * @see https://docs.microsoft.com/en-us/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#send
    */
   send: SendFunction;
 }
 
 function getOrSetupConnection(
   hubUrl: string,
-  options?: IHttpConnectionOptions
+  options?: IHttpConnectionOptions,
+  builder?: IBuilderFunction
 ): Observable<HubConnection> {
   // find if a connection is already cached for this hub
   let connection$ = lookup(hubUrl);
@@ -63,7 +64,7 @@ function getOrSetupConnection(
   if (!connection$) {
     // if no connection is established, create one and wrap it in an shared replay observable
     connection$ = new Observable<HubConnection>(observer => {
-      const connection = createConnection(hubUrl, options);
+      const connection = createConnection(hubUrl, options, builder);
 
       // when the connection closes
       connection.onclose(() => {
@@ -101,15 +102,20 @@ function getOrSetupConnection(
  *
  * @param hubUrl - The URL of the signalr hub endpoint to connect to.
  * @param options - Options object to pass to connection builder.
- *
+ * @param builder - Optional function to apply additional options such as logging/automatic reconnection to the HubConnectionBuilder.
+ *  *
  * @returns An object containing methods to interact with the hub connection.
  */
 export function useSignalr(
   hubUrl: string,
-  options?: IHttpConnectionOptions
+  options?: IHttpConnectionOptions,
+  builder?: IBuilderFunction
 ): UseSignalrHookResult {
   // ignore hubUrl & options changes, todo: useRef, useState ?
-  const connection$ = useMemo(() => getOrSetupConnection(hubUrl, options), []);
+  const connection$ = useMemo(
+    () => getOrSetupConnection(hubUrl, options, builder),
+    []
+  );
 
   useEffect(() => {
     // used to maintain 1 active subscription while the hook is rendered
