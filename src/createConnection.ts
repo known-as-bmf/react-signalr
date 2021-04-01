@@ -2,41 +2,29 @@ import {
   HubConnectionBuilder,
   IHttpConnectionOptions,
   HubConnection,
-  LogLevel,
-  ILogger,
-  IRetryPolicy,
 } from '@microsoft/signalr';
+
+interface IBuilderFunction {
+  (builder: HubConnectionBuilder): void;
+}
 
 /**
  * Creates a signalr hub connection.
  * @param url - The URL of the signalr hub endpoint to connect to.
  * @param options - Optional options object to pass to connection builder.
- * @param logging - Optional logging options to pass to connection builder.
- * @param reconnectOptions - Optional reconnect options to pass to connection builder.
+ * @param builder - Optional function to apply additional options such as logging/automatic reconnection to the HubConnectionBuilder.
  */
-export const createConnection = (
+const createConnection = (
   url: string,
   options: IHttpConnectionOptions = {},
-  logging: LogLevel | string | ILogger,
-  reconnectOptions: boolean | IRetryPolicy | number[]
+  builder?: IBuilderFunction
 ): HubConnection => {
   const hubConnectionBuilder = new HubConnectionBuilder().withUrl(url, options);
 
-  if (logging) {
-    hubConnectionBuilder.configureLogging(logging);
-  }
-
-  if (reconnectOptions) {
-    if (typeof reconnectOptions === 'boolean') {
-      hubConnectionBuilder.withAutomaticReconnect();
-    } else if (Array.isArray(reconnectOptions)) {
-      hubConnectionBuilder.withAutomaticReconnect(reconnectOptions as number[]);
-    } else {
-      hubConnectionBuilder.withAutomaticReconnect(
-        reconnectOptions as IRetryPolicy
-      );
-    }
-  }
+  // Apply additional options to the HubConnectionBuilder if supplied
+  builder && builder(hubConnectionBuilder);
 
   return hubConnectionBuilder.build();
 };
+
+export { IBuilderFunction, createConnection };
