@@ -80,7 +80,11 @@ describe('useSignalr', () => {
       const { result } = renderHook(() => useSignalr('url1'));
 
       expect(createConnectionMock).toHaveBeenCalledTimes(1);
-      expect(createConnectionMock).toHaveBeenCalledWith('url1', undefined);
+      expect(createConnectionMock).toHaveBeenCalledWith(
+        'url1',
+        undefined,
+        undefined
+      );
       expect(result.current.on).toBeDefined();
       expect(result.current.on).toBeInstanceOf(Function);
       expect(result.current.send).toBeDefined();
@@ -94,7 +98,11 @@ describe('useSignalr', () => {
       const { result } = renderHook(() => useSignalr('url2', options));
 
       expect(createConnectionMock).toHaveBeenCalledTimes(1);
-      expect(createConnectionMock).toHaveBeenCalledWith('url2', options);
+      expect(createConnectionMock).toHaveBeenCalledWith(
+        'url2',
+        options,
+        undefined
+      );
       expect(result.current.on).toBeDefined();
       expect(result.current.on).toBeInstanceOf(Function);
       expect(result.current.send).toBeDefined();
@@ -121,7 +129,11 @@ describe('useSignalr', () => {
       renderHook(() => useSignalr('url2', options));
 
       expect(createConnectionMock).toHaveBeenCalledTimes(1);
-      expect(createConnectionMock).toHaveBeenCalledWith('url2', options);
+      expect(createConnectionMock).toHaveBeenCalledWith(
+        'url2',
+        options,
+        undefined
+      );
     });
 
     it('should stop the connection on unmount', () => {

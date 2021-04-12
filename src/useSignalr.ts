@@ -3,7 +3,10 @@ import { HubConnection, IHttpConnectionOptions } from '@microsoft/signalr';
 import { shareReplay, switchMap, share, take } from 'rxjs/operators';
 import { useCallback, useEffect, useMemo } from 'react';
 
-import { createConnection } from './createConnection';
+import {
+  createConnection,
+  HubConnectionBuilderDelegate,
+} from './createConnection';
 import { lookup, invalidate, cache } from './cache';
 
 type SendFunction = (methodName: string, arg?: unknown) => Promise<void>;
@@ -55,7 +58,8 @@ interface UseSignalrHookResult {
 
 function getOrSetupConnection(
   hubUrl: string,
-  options?: IHttpConnectionOptions
+  options?: IHttpConnectionOptions,
+  delegate?: HubConnectionBuilderDelegate
 ): Observable<HubConnection> {
   // find if a connection is already cached for this hub
   let connection$ = lookup(hubUrl);
@@ -63,7 +67,7 @@ function getOrSetupConnection(
   if (!connection$) {
     // if no connection is established, create one and wrap it in an shared replay observable
     connection$ = new Observable<HubConnection>(observer => {
-      const connection = createConnection(hubUrl, options);
+      const connection = createConnection(hubUrl, options, delegate);
 
       // when the connection closes
       connection.onclose(() => {
@@ -106,10 +110,14 @@ function getOrSetupConnection(
  */
 export function useSignalr(
   hubUrl: string,
-  options?: IHttpConnectionOptions
+  options?: IHttpConnectionOptions,
+  delegate?: HubConnectionBuilderDelegate
 ): UseSignalrHookResult {
-  // ignore hubUrl & options changes, todo: useRef, useState ?
-  const connection$ = useMemo(() => getOrSetupConnection(hubUrl, options), []);
+  // ignore hubUrl, options & delegate changes, todo: useRef, useState ?
+  const connection$ = useMemo(
+    () => getOrSetupConnection(hubUrl, options, delegate),
+    []
+  );
 
   useEffect(() => {
     // used to maintain 1 active subscription while the hook is rendered
