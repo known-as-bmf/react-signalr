@@ -21,7 +21,7 @@ interface UseSignalrHookResult {
    *
    * @typeparam TResponse - The expected response type.
    * @param methodName - The name of the server method to invoke.
-   * @param arg - The argument used to invoke the server method.
+   * @param arg - The argument used to invoke the server method. If no arg is passed or the value passed is undefined, nothing will be sent to the SignalR endpoint.
    *
    * @returns A promise that resolves what `HubConnection.invoke` would have resolved.
    *
@@ -44,7 +44,7 @@ interface UseSignalrHookResult {
    * Proxy to `HubConnection.send`
    *
    * @param methodName - The name of the server method to invoke.
-   * @param arg - The argument used to invoke the server method.
+   * @param arg - The argument used to invoke the server method. If no arg is passed or the value passed is undefined, nothing will be sent to the SignalR endpoint.
    *
    * @returns A promise that resolves when `HubConnection.send` would have resolved.
    *
@@ -125,7 +125,14 @@ export function useSignalr(
           // only take the current value of the observable
           take(1),
           // use the connection
-          switchMap(connection => connection.send(methodName, arg))
+          switchMap(connection => {
+            if (arg === undefined) {
+              // no argument provided
+              return connection.send(methodName);
+            } else {
+              return connection.send(methodName, arg);
+            }
+          })
         )
         .toPromise();
     },
@@ -139,7 +146,14 @@ export function useSignalr(
           // only take the current value of the observable
           take(1),
           // use the connection
-          switchMap(connection => connection.invoke<TResponse>(methodName, arg))
+          switchMap(connection => {
+            if (arg === undefined) {
+              // no argument provided
+              return connection.invoke<TResponse>(methodName);
+            } else {
+              return connection.invoke<TResponse>(methodName, arg);
+            }
+          })
         )
         .toPromise();
     },

@@ -154,7 +154,18 @@ describe('useSignalr', () => {
   });
 
   describe('send', () => {
-    it('should call the HubConnection.send method', async () => {
+    it('should call the HubConnection.send method with no arg', async () => {
+      const options = {};
+
+      const { result } = renderHook(() => useSignalr('url2', options));
+
+      await act(() => result.current.send('test'));
+
+      expect(send).toHaveBeenCalledTimes(1);
+      expect(send).toHaveBeenCalledWith('test');
+    });
+
+    it('should call the HubConnection.send method with an arg', async () => {
       const options = {};
 
       const { result } = renderHook(() => useSignalr('url2', options));
@@ -167,7 +178,18 @@ describe('useSignalr', () => {
   });
 
   describe('invoke', () => {
-    it('should call the HubConnection.invoke method', async () => {
+    it('should call the HubConnection.invoke method with no arg', async () => {
+      const options = {};
+
+      const { result } = renderHook(() => useSignalr('url2', options));
+
+      await act(() => result.current.invoke<void>('test'));
+
+      expect(invoke).toHaveBeenCalledTimes(1);
+      expect(invoke).toHaveBeenCalledWith('test');
+    });
+
+    it('should call the HubConnection.invoke method with an arg', async () => {
       const options = {};
 
       const { result } = renderHook(() => useSignalr('url2', options));
