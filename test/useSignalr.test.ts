@@ -19,6 +19,8 @@ describe('useSignalr', () => {
   let start: jest.Mock<Promise<void>, []>;
   let stop: jest.Mock<Promise<void>, []>;
   let onclose: jest.Mock<void, [(error?: Error) => void]>;
+  let onreconnecting: jest.Mock<void, [(error?: Error) => void]>;
+  let onreconnected: jest.Mock<void, [(connectionId?: string) => void]>;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let on: jest.Mock<void, [string, (...args: any[]) => void]>;
@@ -36,6 +38,8 @@ describe('useSignalr', () => {
       /** noop */
     });
     onclose = jest.fn();
+    onreconnecting = jest.fn();
+    onreconnected = jest.fn();
 
     on = jest.fn();
     off = jest.fn();
@@ -49,6 +53,8 @@ describe('useSignalr', () => {
     createConnectionMock.mockReturnValue(({
       start,
       onclose,
+      onreconnecting,
+      onreconnected,
       stop,
       on,
       off,
@@ -63,6 +69,8 @@ describe('useSignalr', () => {
     start.mockReset();
     stop.mockReset();
     onclose.mockReset();
+    onreconnecting.mockReset();
+    onreconnected.mockReset();
 
     on.mockReset();
     off.mockReset();

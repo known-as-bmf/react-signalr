@@ -1,5 +1,9 @@
-import { fromEventPattern, Observable } from 'rxjs';
-import { HubConnection, IHttpConnectionOptions } from '@microsoft/signalr';
+import { BehaviorSubject, fromEventPattern, Observable } from 'rxjs';
+import {
+  HubConnection,
+  HubConnectionState,
+  IHttpConnectionOptions,
+} from '@microsoft/signalr';
 import { shareReplay, switchMap, share, take } from 'rxjs/operators';
 import { useCallback, useEffect, useMemo } from 'react';
 
@@ -65,25 +69,43 @@ function getOrSetupConnection(
   let connection$ = lookup(hubUrl);
 
   if (!connection$) {
+    const state$ = new BehaviorSubject(HubConnectionState.Disconnected);
+
     // if no connection is established, create one and wrap it in an shared replay observable
-    connection$ = new Observable<HubConnection>(observer => {
+    connection$ = new Observable<HubConnection>(observer$ => {
       const connection = createConnection(hubUrl, options, delegate);
 
       // when the connection closes
       connection.onclose(() => {
+        state$.next(HubConnectionState.Disconnected);
+
         // remove the connection from the cache
         invalidate(hubUrl);
+
         // close the observable (trigger the teardown)
-        observer.complete();
+        state$.complete();
+        observer$.complete();
+      });
+
+      connection.onreconnecting(() => {
+        state$.next(HubConnectionState.Reconnecting);
+      });
+
+      connection.onreconnected(() => {
+        state$.next(HubConnectionState.Connected);
       });
 
       // start the connection and emit to the observable when the connection is ready
+      state$.next(HubConnectionState.Connecting);
+
       void connection.start().then(() => {
-        observer.next(connection);
+        observer$.next(connection);
+        state$.next(HubConnectionState.Connected);
       });
 
       // teardown logic will be executed when there is no subscribers left (close the connection)
       return () => {
+        state$.next(HubConnectionState.Disconnecting);
         void connection.stop();
       };
     }).pipe(
