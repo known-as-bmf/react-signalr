@@ -1,1 +1,1 @@
-export { useSignalr } from './useSignalr';
+export { useSignalr, UseSignalrHookResult } from './useSignalr';

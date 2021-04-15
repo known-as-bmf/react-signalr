@@ -1,10 +1,18 @@
 jest.mock('../src/createConnection');
 
-import { HubConnection, IHttpConnectionOptions } from '@microsoft/signalr';
-import { renderHook, act } from '@testing-library/react-hooks';
-import { Subscription } from 'rxjs';
+import {
+  HubConnection,
+  HubConnectionState,
+  IHttpConnectionOptions,
+} from '@microsoft/signalr';
+import {
+  renderHook,
+  act,
+  RenderHookResult,
+  Renderer,
+} from '@testing-library/react-hooks';
 
-import { useSignalr } from '../src';
+import { useSignalr, UseSignalrHookResult } from '../src';
 import * as createConnection from '../src/createConnection';
 
 const createConnectionMock = createConnection.createConnection as jest.Mock<
@@ -14,6 +22,14 @@ const createConnectionMock = createConnection.createConnection as jest.Mock<
 
 // we have to use delays for certain async stuff... TODO: find a way to remove this hack.
 // const delay = (duration: number = 0) => new Promise(res => setTimeout(res, duration));
+
+const buildHook = async (
+  ...args: Parameters<typeof useSignalr>
+): Promise<
+  RenderHookResult<unknown, UseSignalrHookResult, Renderer<unknown>>
+> => {
+  return renderHook(() => useSignalr(...args));
+};
 
 describe('useSignalr', () => {
   let start: jest.Mock<Promise<void>, []>;
@@ -30,36 +46,48 @@ describe('useSignalr', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let invoke: jest.Mock<Promise<any>, [string, ...any[]]>;
 
+  // this callback will store the "onclose" callback
+  // and will be used to cleanup after a test
+  // so I dont have to explicitly unmount at the ed of each test
+  let teardownCallback: () => void;
+
   beforeEach(() => {
     start = jest.fn(async () => {
-      /** noop */
+      /* noop */
     });
     stop = jest.fn(async () => {
-      /** noop */
+      /* noop */
     });
-    onclose = jest.fn();
+    onclose = jest.fn(fn => {
+      teardownCallback = fn;
+    });
     onreconnecting = jest.fn();
     onreconnected = jest.fn();
 
     on = jest.fn();
     off = jest.fn();
     send = jest.fn(async (_, ...__) => {
-      /** noop */
+      /* noop */
     });
     invoke = jest.fn(async (_, ...__) => {
-      /** noop */
+      /* noop */
     });
+
+    teardownCallback = () => {
+      /* noop */
+    };
 
     createConnectionMock.mockReturnValue(({
       start,
+      stop,
       onclose,
       onreconnecting,
       onreconnected,
-      stop,
       on,
       off,
       send,
       invoke,
+      state: HubConnectionState.Connected, // fake static state for now
     } as unknown) as HubConnection);
   });
 
@@ -76,6 +104,8 @@ describe('useSignalr', () => {
     off.mockReset();
     send.mockReset();
     invoke.mockReset();
+
+    teardownCallback();
   });
 
   it('should be a function', () => {
@@ -84,8 +114,8 @@ describe('useSignalr', () => {
   });
 
   describe('renders without crashing', () => {
-    it('1 param', () => {
-      const { result } = renderHook(() => useSignalr('url1'));
+    it('1 param', async () => {
+      const { result } = await buildHook('url1');
 
       expect(createConnectionMock).toHaveBeenCalledTimes(1);
       expect(createConnectionMock).toHaveBeenCalledWith(
@@ -101,9 +131,9 @@ describe('useSignalr', () => {
       expect(result.current.invoke).toBeInstanceOf(Function);
     });
 
-    it('2 params', () => {
+    it('2 params', async () => {
       const options = {};
-      const { result } = renderHook(() => useSignalr('url2', options));
+      const { result } = await buildHook('url2', options);
 
       expect(createConnectionMock).toHaveBeenCalledTimes(1);
       expect(createConnectionMock).toHaveBeenCalledWith(
@@ -121,55 +151,46 @@ describe('useSignalr', () => {
   });
 
   describe('connection management', () => {
-    it('should start the connection', () => {
+    it('should start the connection', async () => {
       const options = {};
 
-      renderHook(() => useSignalr('url2', options));
+      await buildHook('url3', options);
 
       expect(start).toHaveBeenCalledTimes(1);
     });
 
-    it('should create a single connection', () => {
+    it('should create a single connection', async () => {
       const options = {};
 
-      renderHook(() => useSignalr('url2', options));
-      renderHook(() => useSignalr('url2', options));
-      renderHook(() => useSignalr('url2', options));
+      await buildHook('url4', options);
+      await buildHook('url4', options);
+      await buildHook('url4', options);
 
       expect(createConnectionMock).toHaveBeenCalledTimes(1);
       expect(createConnectionMock).toHaveBeenCalledWith(
-        'url2',
+        'url4',
         options,
         undefined
       );
     });
 
-    it('should stop the connection on unmount', () => {
+    it('should stop the connection on unmount', async () => {
       const options = {};
 
-      const { unmount } = renderHook(() => useSignalr('url2', options));
+      const { unmount } = await buildHook('url5', options);
 
       unmount();
 
       expect(stop).toHaveBeenCalledTimes(1);
     });
 
-    it('should register a onclose callback', () => {
+    it('should register a onclose callback', async () => {
       const options = {};
-      let teardownCallback: () => void = () => {
-        /** noop */
-      };
 
-      onclose.mockImplementation((fn: () => void) => {
-        teardownCallback = fn;
-      });
-
-      renderHook(() => useSignalr('url2', options));
+      await buildHook('url6', options);
 
       expect(onclose).toHaveBeenCalledTimes(1);
       expect(onclose).toHaveBeenCalledWith(expect.any(Function));
-
-      teardownCallback();
     });
   });
 
@@ -177,7 +198,7 @@ describe('useSignalr', () => {
     it('should call the HubConnection.send method with no arg', async () => {
       const options = {};
 
-      const { result } = renderHook(() => useSignalr('url2', options));
+      const { result } = await buildHook('url7', options);
 
       await act(() => result.current.send('test'));
 
@@ -188,7 +209,7 @@ describe('useSignalr', () => {
     it('should call the HubConnection.send method with an arg', async () => {
       const options = {};
 
-      const { result } = renderHook(() => useSignalr('url2', options));
+      const { result } = await buildHook('url8', options);
 
       await act(() => result.current.send('test', 'arg'));
 
@@ -201,7 +222,7 @@ describe('useSignalr', () => {
     it('should call the HubConnection.invoke method with no arg', async () => {
       const options = {};
 
-      const { result } = renderHook(() => useSignalr('url2', options));
+      const { result } = await buildHook('url9', options);
 
       await act(() => result.current.invoke<void>('test'));
 
@@ -212,7 +233,7 @@ describe('useSignalr', () => {
     it('should call the HubConnection.invoke method with an arg', async () => {
       const options = {};
 
-      const { result } = renderHook(() => useSignalr('url2', options));
+      const { result } = await buildHook('url10', options);
 
       await act(() => result.current.invoke<void>('test', 'arg'));
 
@@ -222,45 +243,42 @@ describe('useSignalr', () => {
   });
 
   describe('on', () => {
-    it('should do nothing if not subscribed', () => {
+    it('should do nothing if not subscribed', async () => {
       const options = {};
 
-      const { result } = renderHook(() => useSignalr('url2', options));
+      const { result } = await buildHook('url11', options);
 
-      result.current.on('test');
+      await act(() => {
+        result.current.on('test');
+        return Promise.resolve();
+      });
 
       expect(on).not.toHaveBeenCalled();
+      expect(off).not.toHaveBeenCalled();
     });
 
     it('should call HubConnection.on when subscribing', async () => {
       const options = {};
 
-      const { result } = renderHook(() => useSignalr('url2', options));
+      const { result } = await buildHook('url12', options);
 
-      const obs$ = result.current.on('test');
       await act(() => {
-        obs$.subscribe();
+        result.current.on('test').subscribe();
         return Promise.resolve();
       });
 
       expect(on).toHaveBeenCalledTimes(1);
       expect(on).toHaveBeenCalledWith('test', expect.any(Function));
+      expect(off).not.toHaveBeenCalled();
     });
 
     it('should call HubConnection.off when unsubscribing', async () => {
       const options = {};
-      let subscription: Subscription;
 
-      const { result } = renderHook(() => useSignalr('url2', options));
-
-      const obs$ = result.current.on('test');
-      await act(() => {
-        subscription = obs$.subscribe();
-        return Promise.resolve();
-      });
+      const { result } = renderHook(() => useSignalr('url13', options));
 
       await act(() => {
-        subscription.unsubscribe();
+        result.current.on('test').subscribe().unsubscribe();
         return Promise.resolve();
       });
 

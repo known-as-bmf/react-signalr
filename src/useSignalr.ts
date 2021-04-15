@@ -1,11 +1,18 @@
-import { BehaviorSubject, fromEventPattern, Observable } from 'rxjs';
 import {
   HubConnection,
   HubConnectionState,
   IHttpConnectionOptions,
 } from '@microsoft/signalr';
-import { shareReplay, switchMap, share, take } from 'rxjs/operators';
 import { useCallback, useEffect, useMemo } from 'react';
+import { fromEventPattern, Observable } from 'rxjs';
+import {
+  shareReplay,
+  switchMap,
+  share,
+  take,
+  filter,
+  distinct,
+} from 'rxjs/operators';
 
 import {
   createConnection,
@@ -22,7 +29,7 @@ type OnFunction = <TMessage = unknown>(
   methodName: string
 ) => Observable<TMessage>;
 
-interface UseSignalrHookResult {
+export interface UseSignalrHookResult {
   /**
    * Proxy to `HubConnection.invoke`.
    *
@@ -64,61 +71,58 @@ function getOrSetupConnection(
   hubUrl: string,
   options?: IHttpConnectionOptions,
   delegate?: HubConnectionBuilderDelegate
-): Observable<HubConnection> {
+): Observable<[HubConnection, HubConnectionState]> {
   // find if a connection is already cached for this hub
-  let connection$ = lookup(hubUrl);
+  let context$ = lookup(hubUrl);
 
-  if (!connection$) {
-    const state$ = new BehaviorSubject(HubConnectionState.Disconnected);
-
+  if (!context$) {
     // if no connection is established, create one and wrap it in an shared replay observable
-    connection$ = new Observable<HubConnection>(observer$ => {
+    context$ = new Observable<[HubConnection, HubConnectionState]>(observer => {
       const connection = createConnection(hubUrl, options, delegate);
+
+      const emit = (): void => {
+        observer.next([connection, connection.state]);
+      };
+
+      emit();
 
       // when the connection closes
       connection.onclose(() => {
-        state$.next(HubConnectionState.Disconnected);
+        emit();
 
         // remove the connection from the cache
         invalidate(hubUrl);
 
         // close the observable (trigger the teardown)
-        state$.complete();
-        observer$.complete();
+        observer.complete();
       });
 
-      connection.onreconnecting(() => {
-        state$.next(HubConnectionState.Reconnecting);
-      });
+      connection.onreconnecting(emit);
 
-      connection.onreconnected(() => {
-        state$.next(HubConnectionState.Connected);
-      });
+      connection.onreconnected(emit);
 
       // start the connection and emit to the observable when the connection is ready
-      state$.next(HubConnectionState.Connecting);
-
-      void connection.start().then(() => {
-        observer$.next(connection);
-        state$.next(HubConnectionState.Connected);
-      });
+      void connection.start().then(emit);
+      emit();
 
       // teardown logic will be executed when there is no subscribers left (close the connection)
       return () => {
-        state$.next(HubConnectionState.Disconnecting);
         void connection.stop();
+        emit();
       };
     }).pipe(
+      // do not emit duplicated states (is this possible ?)
+      distinct(([, state]) => state),
       // everyone subscribing will get the same connection
       // refCount is used to complete the observable when there is no subscribers left
       shareReplay({ refCount: true, bufferSize: 1 })
     );
 
     // add the connection to the cache
-    cache(hubUrl, connection$);
+    cache(hubUrl, context$);
   }
 
-  return connection$;
+  return context$;
 }
 
 /**
@@ -136,26 +140,30 @@ export function useSignalr(
   delegate?: HubConnectionBuilderDelegate
 ): UseSignalrHookResult {
   // ignore hubUrl, options & delegate changes, todo: useRef, useState ?
-  const connection$ = useMemo(
+  const context$ = useMemo(
     () => getOrSetupConnection(hubUrl, options, delegate),
     []
   );
 
   useEffect(() => {
     // used to maintain 1 active subscription while the hook is rendered
-    const subscription = connection$.subscribe(); // todo: handle on complete (unexpected connection stop) ?
+    const subscription = context$.subscribe(); // todo: handle on complete (unexpected connection stop) ?
 
     return () => subscription.unsubscribe();
-  }, [connection$]);
+  }, [context$]);
 
   const send = useCallback<SendFunction>(
     (methodName: string, arg?: unknown) => {
-      return connection$
+      return context$
         .pipe(
-          // only take the current value of the observable
+          // only interested if the connection established
+          // this will make the code "wait" for the connection to be established
+          filter(([, state]) => state === HubConnectionState.Connected),
+          // TODO: add a timeoutWith(duration, throwError("Connection was not established after Xsec.")) ?
+          // take the latest value
           take(1),
           // use the connection
-          switchMap(connection => {
+          switchMap(([connection]) => {
             if (arg === undefined) {
               // no argument provided
               return connection.send(methodName);
@@ -166,17 +174,21 @@ export function useSignalr(
         )
         .toPromise();
     },
-    [connection$]
+    [context$]
   );
 
   const invoke = useCallback<InvokeFunction>(
     <TResponse>(methodName: string, arg?: unknown) => {
-      return connection$
+      return context$
         .pipe(
-          // only take the current value of the observable
+          // only interested if the connection established
+          // this will make the code "wait" for the connection to be established
+          filter(([, state]) => state === HubConnectionState.Connected),
+          // TODO: add a timeoutWith(duration, throwError("Connection was not established after Xsec.")) ?
+          // take the latest value
           take(1),
           // use the connection
-          switchMap(connection => {
+          switchMap(([connection]) => {
             if (arg === undefined) {
               // no argument provided
               return connection.invoke<TResponse>(methodName);
@@ -187,17 +199,17 @@ export function useSignalr(
         )
         .toPromise();
     },
-    [connection$]
+    [context$]
   );
 
   const on = useCallback<OnFunction>(
     <TMessage>(methodName: string) => {
-      return connection$
+      return context$
         .pipe(
-          // only take the current value of the observable
+          // take the latest value of the observable
           take(1),
           // use the connection
-          switchMap(connection =>
+          switchMap(([connection]) =>
             // create an observable from the server events
             fromEventPattern<TMessage>(
               (handler: (...args: unknown[]) => void) =>
@@ -209,7 +221,7 @@ export function useSignalr(
         )
         .pipe(share());
     },
-    [connection$]
+    [context$]
   );
 
   return { invoke, on, send };
