@@ -3,7 +3,7 @@ import {
   HubConnectionState,
   IHttpConnectionOptions,
 } from '@microsoft/signalr';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fromEventPattern, Observable } from 'rxjs';
 import {
   shareReplay,
@@ -29,7 +29,7 @@ type OnFunction = <TMessage = unknown>(
   methodName: string
 ) => Observable<TMessage>;
 
-export interface UseSignalrHookResult {
+interface UseSignalrHookResult {
   /**
    * Proxy to `HubConnection.invoke`.
    *
@@ -39,7 +39,7 @@ export interface UseSignalrHookResult {
    *
    * @returns A promise that resolves what `HubConnection.invoke` would have resolved.
    *
-   * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#invoke
+   * @see https://docs.microsoft.com/en-us/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#invoke
    */
   invoke: InvokeFunction;
   /**
@@ -50,8 +50,8 @@ export interface UseSignalrHookResult {
    *
    * @returns An observable that emits every time a realtime message is recieved.
    *
-   * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#on
-   * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#off
+   * @see https://docs.microsoft.com/en-us/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#on
+   * @see https://docs.microsoft.com/en-us/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#off
    */
   on: OnFunction;
   /**
@@ -62,9 +62,13 @@ export interface UseSignalrHookResult {
    *
    * @returns A promise that resolves when `HubConnection.send` would have resolved.
    *
-   * @see https://docs.microsoft.com/fr-fr/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#send
+   * @see https://docs.microsoft.com/en-us/javascript/api/%40aspnet/signalr/hubconnection?view=signalr-js-latest#send
    */
   send: SendFunction;
+  /**
+   * The current state of the connection.
+   */
+  state: HubConnectionState | undefined;
 }
 
 function getOrSetupConnection(
@@ -145,9 +149,13 @@ export function useSignalr(
     []
   );
 
+  const [_state, setState] = useState<HubConnectionState | undefined>(
+    undefined
+  );
+
   useEffect(() => {
     // used to maintain 1 active subscription while the hook is rendered
-    const subscription = context$.subscribe(); // todo: handle on complete (unexpected connection stop) ?
+    const subscription = context$.subscribe(([, state]) => setState(state)); // todo: handle on complete (unexpected connection stop) ?
 
     return () => subscription.unsubscribe();
   }, [context$]);
@@ -224,5 +232,5 @@ export function useSignalr(
     [context$]
   );
 
-  return { invoke, on, send };
+  return { invoke, on, send, state: _state };
 }

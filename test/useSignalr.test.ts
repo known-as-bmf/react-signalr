@@ -12,7 +12,7 @@ import {
   Renderer,
 } from '@testing-library/react-hooks';
 
-import { useSignalr, UseSignalrHookResult } from '../src';
+import { useSignalr } from '../src';
 import * as createConnection from '../src/createConnection';
 
 const createConnectionMock = createConnection.createConnection as jest.Mock<
@@ -26,9 +26,14 @@ const createConnectionMock = createConnection.createConnection as jest.Mock<
 const buildHook = async (
   ...args: Parameters<typeof useSignalr>
 ): Promise<
-  RenderHookResult<unknown, UseSignalrHookResult, Renderer<unknown>>
+  RenderHookResult<unknown, ReturnType<typeof useSignalr>, Renderer<unknown>>
 > => {
-  return renderHook(() => useSignalr(...args));
+  const _result = renderHook(() => useSignalr(...args));
+
+  await _result.waitFor(() =>
+    expect(_result.result.current.state).toBeDefined()
+  );
+  return _result;
 };
 
 describe('useSignalr', () => {
