@@ -1,6 +1,6 @@
 {
   "name": "@known-as-bmf/react-signalr",
-  "version": "1.0.7-beta.0",
+  "version": "1.0.7-beta.1",
   "author": "Julien Avert",
   "description": "Reack hook to wrap a connection to a signalr hub.",
   "keywords": [
