@@ -71,6 +71,8 @@ interface UseSignalrHookResult {
   state: HubConnectionState | undefined;
 }
 
+// https://stackblitz.com/edit/react-ts-enbfpc?file=index.tsx
+
 function getOrSetupConnection(
   hubUrl: string,
   options?: IHttpConnectionOptions,
@@ -88,6 +90,7 @@ function getOrSetupConnection(
         observer.next([connection, connection.state]);
       };
 
+      // emit base connection state
       emit();
 
       // when the connection closes
@@ -106,12 +109,14 @@ function getOrSetupConnection(
       connection.onreconnected(emit);
 
       // start the connection and emit to the observable when the connection is ready
-      void connection.start().then(emit);
+      connection.start().then(emit).catch(emit);
+      // emit connecting state
       emit();
 
       // teardown logic will be executed when there is no subscribers left (close the connection)
       return () => {
         void connection.stop();
+        // emit disconnecting state
         emit();
       };
     }).pipe(
