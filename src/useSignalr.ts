@@ -11,7 +11,7 @@ import {
   share,
   take,
   filter,
-  distinct,
+  distinctUntilChanged,
 } from 'rxjs/operators';
 
 import {
@@ -121,7 +121,10 @@ function getOrSetupConnection(
       };
     }).pipe(
       // do not emit duplicated states (is this possible ?)
-      distinct(([, state]) => state),
+      distinctUntilChanged(
+        (x, y) => x === y,
+        ([, state]) => state
+      ),
       // everyone subscribing will get the same connection
       // refCount is used to complete the observable when there is no subscribers left
       shareReplay({ refCount: true, bufferSize: 1 })
